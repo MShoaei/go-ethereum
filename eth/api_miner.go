@@ -49,6 +49,10 @@ func (api *MinerAPI) Stop() {
 	api.e.StopMining()
 }
 
+func (api *MinerAPI) MineNow(timestamp int64) {
+	api.e.miner.MineNow(timestamp)
+}
+
 // SetExtra sets the extra data string that is included when this miner mines a block.
 func (api *MinerAPI) SetExtra(extra string) (bool, error) {
 	if err := api.e.Miner().SetExtra([]byte(extra)); err != nil {

@@ -178,6 +178,10 @@ func (miner *Miner) Close() {
 	miner.wg.Wait()
 }
 
+func (miner *Miner) MineNow(timestamp int64) {
+	miner.worker.mineCh <- timestamp
+}
+
 func (miner *Miner) Mining() bool {
 	return miner.worker.isRunning()
 }

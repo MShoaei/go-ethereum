@@ -658,6 +658,11 @@ web3._extend({
 			call: 'miner_stop'
 		}),
 		new web3._extend.Method({
+			name: 'mineNow',
+			call: 'miner_mineNow',
+			params: 1
+		}),
+		new web3._extend.Method({
 			name: 'setEtherbase',
 			call: 'miner_setEtherbase',
 			params: 1,

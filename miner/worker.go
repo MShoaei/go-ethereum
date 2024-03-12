@@ -196,6 +196,7 @@ type worker struct {
 	resultCh           chan *types.Block
 	startCh            chan struct{}
 	exitCh             chan struct{}
+	mineCh             chan int64 // this channel is used to manually start sealing the block using clique with 0-period
 	resubmitIntervalCh chan time.Duration
 	resubmitAdjustCh   chan *intervalAdjust
 
@@ -263,6 +264,7 @@ func newWorker(config *Config, chainConfig *params.ChainConfig, engine consensus
 		resultCh:           make(chan *types.Block, resultQueueSize),
 		startCh:            make(chan struct{}, 1),
 		exitCh:             make(chan struct{}),
+		mineCh:             make(chan int64),
 		resubmitIntervalCh: make(chan time.Duration),
 		resubmitAdjustCh:   make(chan *intervalAdjust, resubmitAdjustChanSize),
 	}
@@ -537,6 +539,9 @@ func (w *worker) mainLoop() {
 		case req := <-w.getWorkCh:
 			req.result <- w.generateWork(req.params)
 
+		case t := <-w.mineCh:
+			w.commitWork(nil, t)
+
 		case ev := <-w.txsCh:
 			// Apply transactions to the pending state if we're not sealing
 			//
@@ -577,7 +582,7 @@ func (w *worker) mainLoop() {
 				// Special case, if the consensus engine is 0 period clique(dev mode),
 				// submit sealing work here since all empty submission will be rejected
 				// by clique. Of course the advance sealing(empty submission) is disabled.
-				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 {
+				if w.chainConfig.Clique != nil && w.chainConfig.Clique.Period == 0 && w.mineCh == nil {
 					w.commitWork(nil, time.Now().Unix())
 				}
 			}
