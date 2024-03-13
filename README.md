@@ -1,3 +1,42 @@
+# Changes
+This fork adds a new RPC method to initiate the mining procedure by calling an RPC method. This RPC method takes a timestamp as argument and uses this timestamp as the block time before sealing the block. The RPC method is added in the `miner` namespace and is called `mineNow`. 
+
+The main goal for the modifications included in this fork is to be able to reach the exact same chain after applying the same transaction on different nodes. In order to demonstrate this we will first perform specific steps on a node and take note of the last block hash and then we remove evrythin and perform the exact same steps again and compare the block hashes for equality.
+
+
+## modifications in action
+Create a node and initialize it using a genesis block. The genesis should have the `clique` key and the `period` should be `0`, like below:
+```json
+{
+  ...
+  "clique": {
+        "period": 0,
+        "epoch": 30000
+  }
+  ...
+}
+```
+if the node is initilized using the follwoing command:
+```bash
+geth account new --datadir node1 && geth init --datadir node1 genesis.json
+```
+then we can reset everything about the node using the following command:
+```bash
+rm -rf node1/geth/{chaindata,lightchaindata,blobpool,nodes} && rm -rf node1/geth/transactions.rlp && geth init --datadir node1 genesis.json
+```
+
+save the password set for the node in a text file:
+```bash
+echo -n 'password' > node1/password.txt
+```
+Run the node using the following command (modify chain id and the ether address):
+```bash
+# This command is not secure and should not be used in production
+geth --datadir node1 --port 30306 --networkid <chainID used in genesis>  --unlock <node address> --password node1/password.txt --allow-insecure-unlock --http --http.api 'eth,net,clique,web3,txpool,miner' --authrpc.port 8551 --mine --miner.etherbase <node address>
+```
+
+use [this](https://gist.github.com/MShoaei/7f11ca9e37d0c4da38235eb08b7ccfc4) gist for an example of performing a transaction and printing the details of the generated block
+
 ## Go Ethereum
 
 Golang execution layer implementation of the Ethereum protocol.
